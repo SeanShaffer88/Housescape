@@ -97,6 +97,7 @@ export function validate(p:Project):void {
   }
   if(roomArea(p)<=.1)throw Error('Room must have positive area and counterclockwise walls.');
   const pts=boundary(p);
+  if(pts.length>2048)throw Error('Room exceeds the prototype curve-complexity limit.');
   for(let i=0;i<pts.length;i++)for(let j=i+2;j<pts.length;j++) {
     if(i===0&&j===pts.length-1)continue;
     if(intersects(pts[i],pts[(i+1)%pts.length],pts[j],pts[(j+1)%pts.length]))throw Error('Room boundary cannot cross or touch itself.');

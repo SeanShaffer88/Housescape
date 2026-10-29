@@ -19,6 +19,11 @@ In-app browser at `http://127.0.0.1:5173/`:
 - Editing to 1 m is rejected because its door no longer fits; the valid model is retained.
 - Curved studio shows 26.28 m² and 20.44 m boundary; curved wall length is 4.44 m.
 - No graphics errors were captured during these checks.
+- Applying unchanged curved-wall dimensions succeeds without rounding the actual stored length to the display precision.
+- A preset opening can be added to a curved wall.
+- Saving the curved room, loading the angled example and reopening the exported file restores the curved room and its opening.
+- Dragging the upper-left corner by 0.5 m in each axis updates its adjoining walls to 6.52 m and 4.53 m and the room area to 28.78 m².
+- A UI issue discovered during testing (a visible native file input) was fixed; example loading now uses a prompt instead of leaving a stale example selection after import.
 
 ## Native build limitation
 
