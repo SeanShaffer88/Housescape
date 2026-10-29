@@ -49,6 +49,15 @@ The Windows automation helper could observe but could not operate the owned nati
 
 Clean-machine installation, crash recovery and large-project performance remain unverified. This is an executable prototype with WebView2 as a prerequisite, not a self-contained installer.
 
+## Reference editor 0.2.0 validation
+
+- All 39 automated tests pass; TypeScript and production Vite build pass. The bundled Three.js chunk produces a size advisory.
+- Local Windows release build succeeds with MSVC and Windows SDK; the native app opens the bundled reference-style editor at the Tauri local origin.
+- Native exact-size room creation with `20 ft` by `15 ft` reports 300.00 ft². Undo restores 258.33 ft² and redo restores 300.00 ft². Switching to 3D displays the edited walls and dragging changes the camera orbit.
+- Browser checks cover metric exact-size rectangle creation, undo/redo, area-layer visibility, zoom/fit, drag rectangle creation, closed wall-chain creation with Enter, door placement and its inspector, dimensions, note text escaping and full-canvas 3D switching. Reload restored the edited boundary from the local draft.
+- Native Open/Save backend is unchanged from the 0.1.1 round trip above; dialogs were not repeated for 0.2.0. New project metadata serialization is covered by automated tests.
+- Original 2D/3D reference-layout SVG mockups accompany the editor. See `spaceplanner-parity.md` for implemented, partial and planned features. This remains a single-room prototype and does not claim full SpacePlanner parity.
+
 ## Follow-up acceptance gates
 
 Test drawing/partitioning multiple rooms, thick-wall overlap handling at acute joins, general topology, true inner-face room areas, worker isolation, atomic saves and recovery, local asset archives, accurate vector printing and DXF units. Revisit geometry-library selection before expanding from one simple room. Catalogs and advanced planning tools follow those foundations.
