@@ -1,14 +1,29 @@
 import './style.css';
 import {History,example,validate,wallLength,roomArea,wallFootprint,pointAt,setLength,type Project,type Point} from './geometry';
 import {createScene} from './scene';
+import {isTauri} from '@tauri-apps/api/core';
+import {nativeProjectFiles} from './project-files';
 const $=<T extends HTMLElement>(s:string)=>document.querySelector<T>(s)!;
 document.querySelector('#app')!.innerHTML=`
 <header><div class="brand"><span class="mark">H</span>Housescape<span class="badge">PROTOTYPE 01</span></div><div class="header-actions"><span class="local">● Local workspace</span><button id="open">Open</button><button id="save" class="primary">Save project ↗</button><input id="file" type="file" accept=".json,.housescape" hidden></div></header>
 <div class="projectbar"><div><span class="eyebrow">PERSONAL PROJECT</span><h1 id="name"></h1></div><div class="history"><button id="undo" title="Undo (Ctrl+Z)">↶ Undo</button><button id="redo" title="Redo (Ctrl+Y)">↷ Redo</button><span class="separator"></span><label>Examples <select id="example"><option value="">Load example…</option><option value="studio">Measured studio</option><option value="angled">Angled studio</option><option value="curved">Curved studio</option></select></label></div></div>
-<main><aside class="library"><div class="eyebrow">GEOMETRY LAB</div><h2>Build your space</h2><p class="muted">Select a wall or drag a corner. Both views stay connected.</p><div id="wall-list"></div><div class="note"><strong>One room, real geometry</strong><p>Metres · shared corners · curved walls · door and window openings.</p></div><a href="/mockups/workspace.svg" target="_blank">Workspace concept ↗</a><a href="/mockups/layout-comparison.svg" target="_blank">Layout comparison concept ↗</a></aside>
+<main><aside class="library"><div class="eyebrow">GEOMETRY LAB</div><h2>Build your space</h2><p class="muted">Select a wall or drag a corner. Both views stay connected.</p><div id="wall-list"></div><div class="note"><strong>One room, real geometry</strong><p>Metres · shared corners · curved walls · door and window openings.</p></div><button class="concept-link" data-concept="workspace">Workspace concept ↗</button><button class="concept-link" data-concept="layout-comparison">Layout comparison concept ↗</button></aside>
 <section class="views"><div class="viewbar"><div><strong>Design workspace</strong><span class="muted">Ground floor</span></div><div class="tabs"><button data-view="split" aria-pressed="true">Split</button><button data-view="plan" aria-pressed="false">2D</button><button data-view="model" aria-pressed="false">3D</button></div></div><div class="canvases" data-mode="split"><div class="plan-host"><div class="canvas-label">01 / FLOOR PLAN <span>Drag corners to edit</span></div><svg id="plan" aria-label="Editable floor plan" role="img"></svg><div class="scale">1 square = 1 metre · centreline dimensions</div></div><div class="model-host"><div class="canvas-label">02 / LIVE 3D <span>Drag to orbit · scroll to zoom</span></div><div id="model"></div><button id="camera">Reset view</button></div></div><div class="metrics"><div><span class="eyebrow">ENCLOSED AREA</span><strong id="area"></strong><small>Measured to wall centrelines</small></div><div><span class="eyebrow">BOUNDARY LENGTH</span><strong id="perimeter"></strong><small>Includes exact arc lengths</small></div><div><span class="eyebrow">MODEL STATUS</span><strong class="valid">● Valid loop</strong><small>2D + 3D from the same project</small></div></div></section>
 <aside class="inspector"><div class="eyebrow">WALL PROPERTIES</div><h2 id="wall-name"></h2><form id="properties"><label>Length <span>m</span><input id="length" type="number" min="0.1" max="50" step="0.01" required></label><label>Height <span>m</span><input id="height" type="number" min="0.2" max="10" step="0.05" required></label><label>Thickness <span>m</span><input id="thickness" type="number" min="0.05" max="1" step="0.01" required></label><label>Curve sweep <span>degrees</span><input id="sweep" type="number" min="-170" max="170" step="1" required></label><p class="muted">Length edits move the end corner and keep the adjoining wall connected.</p><button class="primary wide" type="submit">Apply dimensions</button></form><hr><h3>Openings</h3><div id="openings"></div><p class="muted">Openings are measured along the wall. This prototype uses preset door and window sizes.</p><button id="opening" class="wide">Add / remove opening</button><hr><div class="eyebrow">PROTOTYPE SCOPE</div><p class="muted">One closed room. No furniture, roofs, multiple floors or scaled printing yet.</p></aside></main><footer><span id="status" role="status" aria-live="polite">Ready. Your project stays on this computer.</span><span>Windows 11 · Offline by design</span></footer>`;
 let history=new History(example()),selected='w0';
+const conceptDialog=document.createElement('dialog');
+conceptDialog.className='concept-dialog';conceptDialog.setAttribute('aria-labelledby','concept-title');
+conceptDialog.innerHTML='<div class="concept-header"><h2 id="concept-title">Design concept</h2><button id="close-concept" type="button">Close concept</button></div><p class="muted">Design mockup · advanced tools pictured here are planned features.</p><img id="concept-image" alt="">';
+document.body.append(conceptDialog);
+const conceptNames:Record<string,string>={workspace:'Workspace concept','layout-comparison':'Layout comparison concept'};
+document.querySelectorAll<HTMLButtonElement>('[data-concept]').forEach(button=>button.onclick=()=>{
+  const key=button.dataset.concept!;if(!Object.hasOwn(conceptNames,key))return;
+  const image=conceptDialog.querySelector<HTMLImageElement>('#concept-image')!;
+  image.src=`/mockups/${key}.svg`;image.alt=conceptNames[key];
+  conceptDialog.querySelector('#concept-title')!.textContent=conceptNames[key];
+  conceptDialog.showModal();
+});
+conceptDialog.querySelector<HTMLButtonElement>('#close-concept')!.onclick=()=>conceptDialog.close();
 let scene:ReturnType<typeof createScene>|undefined;
 let graphicsError='';try{scene=createScene($('#model'));}catch{graphicsError='3D unavailable: this device needs WebGL 2.';$('#model').textContent=graphicsError;}
 const svg=$<SVGSVGElement & HTMLElement>('#plan');
@@ -40,8 +55,12 @@ $('#undo').onclick=()=>{history.undo();render();status('Undone.');};$('#redo').o
 $('#example').onchange=()=>{const kind=$<HTMLSelectElement>('#example').value;if(!kind)return;selected='w0';commit(example(kind),'Example loaded. Undo restores your previous room.');};
 $('#camera').onclick=()=>scene?.reset();
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{$('.canvases').dataset.mode=b.dataset.view;document.querySelectorAll('[data-view]').forEach(v=>v.setAttribute('aria-pressed',String(v===b)));});
-$('#save').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(history.current,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='studio.housescape';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Project exported to a local file.');};
-$('#open').onclick=()=>$<HTMLInputElement>('#file').click();
+async function fileAction(action:()=>Promise<void>){
+  const buttons=[$<HTMLButtonElement>('#save'),$<HTMLButtonElement>('#open')];buttons.forEach(b=>b.disabled=true);
+  try{await action();}catch(e){status(`File operation failed: ${e instanceof Error?e.message:String(e)}`,true);}finally{buttons.forEach(b=>b.disabled=false);}
+}
+$('#save').onclick=()=>{if(isTauri())void fileAction(async()=>{const path=await(await nativeProjectFiles()).save(history.current);status(path?`Saved ${path.split(/[\\/]/).pop()}.`:'Save cancelled.');});else {const url=URL.createObjectURL(new Blob([JSON.stringify(history.current,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='studio.housescape';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Project export sent to your browser.');}};
+$('#open').onclick=()=>{if(isTauri())void fileAction(async()=>{const project=await(await nativeProjectFiles()).open();if(project)commit(project,'Project opened.');else status('Open cancelled.');});else $<HTMLInputElement>('#file').click();};
 $('#file').onchange=async()=>{const input=$<HTMLInputElement>('#file'),file=input.files?.[0];if(!file)return;try{if(file.size>1_000_000)throw Error('Prototype project files must be smaller than 1 MB.');const next=JSON.parse(await file.text());validate(next);commit(next,'Project opened.');}catch(e){status('Cannot open project: '+(e as Error).message,true);}input.value='';};
 window.addEventListener('keydown',e=>{if((e.target as HTMLElement).matches('input,select,textarea'))return;if(e.ctrlKey||e.metaKey){if(e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?history.redo():history.undo();render();}if(e.key.toLowerCase()==='y'){e.preventDefault();history.redo();render();}}});
 let drag:{id:string;next:Project}|undefined;
