@@ -1,6 +1,6 @@
 # Housescape
 
-An offline Windows 11 space planner for personal use. **Geometry prototype 0.1.0**, not a complete floor-planning application.
+An offline Windows 11 space planner for personal use. **Geometry prototype 0.1.1**, not a complete floor-planning application.
 
 ![Workspace design concept](public/mockups/workspace.svg)
 
@@ -39,12 +39,13 @@ The desktop build embeds `dist/` and produces `src-tauri/target/release/housesca
 - Toggle a preset door opening; sample rooms also include a window. 3D wall geometry retains the sill/lintel and leaves the opening empty.
 - Undo/redo using the buttons or Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z also redoes).
 - Orbit/zoom the 3D view and switch between split, 2D and 3D views.
-- Save and reopen a local `.housescape` file. This initial format is plain versioned JSON, not the eventual asset archive. In the desktop WebView the save control exports through a browser download; verify download handling before relying on it for important work.
+- Save and reopen a local `.housescape` file. This initial format is plain versioned JSON, not the eventual asset archive. The desktop app uses native Open/Save As dialogs and reports success only after a completed write; cancelling a dialog leaves the project unchanged. The browser preview continues to use file selection/downloads.
 
 ## Mockups and design
 
 - [Workspace concept](public/mockups/workspace.svg): build tools, measured plan, 3D and property inspector.
 - [Layout comparison concept](public/mockups/layout-comparison.svg): future design alternatives and clearance/cost comparison.
+- [In-app concept viewer](public/mockups/concept-viewer.svg): mockups open inside the application so they also work in the native shell. Close the viewer with its button or Escape.
 - Regenerate SVG concepts with `node scripts/mockups.mjs`. Furniture, alternatives and cost tools in the concepts are **planned**, not implemented.
 
 ## Geometry contract and limits

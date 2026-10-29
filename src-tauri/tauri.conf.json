@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Housescape",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.housescape.desktop",
   "build": {"beforeDevCommand":"npm run dev", "devUrl":"http://127.0.0.1:5173", "beforeBuildCommand":"npm run build", "frontendDist":"../dist"},
   "app": {"windows":[{"title":"Housescape · Geometry studio","width":1440,"height":960,"minWidth":800,"minHeight":700}],"security":{"csp":"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'"}},

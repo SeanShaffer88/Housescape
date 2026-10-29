@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Project file dialogs with access only to selected files.",
+  "windows": ["main"],
+  "permissions": ["core:default", "dialog:allow-open", "dialog:allow-save", "fs:allow-stat", "fs:allow-read-text-file", "fs:allow-write-text-file"]
+}

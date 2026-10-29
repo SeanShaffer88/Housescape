@@ -6,6 +6,7 @@
 
 - 19 Vitest geometry tests: rectangle area/perimeter; dimension edits and shared nodes; angled room; miter coincidence; crossing/invalid/disconnected geometry; invalid import schema; analytic arc length/segment area, signed sweep and nearly straight walls; arc-length edits; render tessellation; door void volume and lintel; window sill; invalid/overlapping openings; orphan-opening rejection; JSON round trip; 40-step undo/redo without accumulated drift; history branching/isolation; rejection preserving previous state.
 - TypeScript strict type check and Vite production build pass locally.
+- Eight native file-workflow tests cover cancellation without I/O, write errors, waiting for confirmed completion, snapshot isolation across a save dialog, size limits before reads, malformed/invalid imports and a curved-room round trip. Total: 27 passing tests.
 - `npm audit` after updating the test tool reports zero vulnerabilities.
 - GitHub Actions repeats tests/build on Windows, then checks and builds the Tauri executable. See the actual run for its final result.
 
@@ -25,9 +26,17 @@ In-app browser at `http://127.0.0.1:5173/`:
 - Dragging the upper-left corner by 0.5 m in each axis updates its adjoining walls to 6.52 m and 4.53 m and the room area to 28.78 m².
 - A UI issue discovered during testing (a visible native file input) was fixed; example loading now uses a prompt instead of leaving a stale example selection after import.
 
-## Native build limitation
+## Native Windows validation
 
-Local `cargo check` was attempted and could not compile because the Microsoft C++ linker `link.exe` is absent from the available toolchain. No Visual Studio C++ toolchain was found through vswhere. Native execution, native download handling, a clean-machine offline installation, and performance on the user's target GPU remain unverified locally. The shell configuration and CI build do not constitute an installer or native UI test.
+Microsoft C++ Build Tools and the Windows SDK are now installed. Local optimized Tauri builds of 0.1.0 and 0.1.1 complete successfully. The earlier missing-linker limitation is resolved.
+
+The baseline native app rendered its 2D plan and WebGL 3D view. Editing wall 1 to 8 m produced 28.00 m² and a 4.47 m adjoining wall; undo restored 24.00 m². Its download-based Save created an actual project file in Downloads.
+
+Native testing exposed nonfunctional new-window concept links. Version 0.1.1 replaces them with an in-app viewer. Both bundled concept images, Close and Escape were verified in the production browser preview without console errors. A third SVG mockup documents this viewer.
+
+Version 0.1.1 also uses app-owned native Open/Save As dialogs and narrowly scoped filesystem permissions for selected files. File controls are disabled while a request is pending; success follows the completed write, and cancellation/errors have distinct messages. The native Save As dialog opens. The Windows automation helper cannot operate the owned dialog's controls; actual post-save validation is pending a manual dialog step. Automated file-workflow tests pass, but are not a substitute for that native check.
+
+Clean-machine installation, crash recovery and large-project performance remain unverified. This is an executable prototype with WebView2 as a prerequisite, not a self-contained installer.
 
 ## Follow-up acceptance gates
 
