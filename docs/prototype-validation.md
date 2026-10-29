@@ -32,9 +32,20 @@ Microsoft C++ Build Tools and the Windows SDK are now installed. Local optimized
 
 The baseline native app rendered its 2D plan and WebGL 3D view. Editing wall 1 to 8 m produced 28.00 m² and a 4.47 m adjoining wall; undo restored 24.00 m². Its download-based Save created an actual project file in Downloads.
 
-Native testing exposed nonfunctional new-window concept links. Version 0.1.1 replaces them with an in-app viewer. Both bundled concept images, Close and Escape were verified in the production browser preview without console errors. A third SVG mockup documents this viewer.
+Native testing exposed nonfunctional new-window concept links. Version 0.1.1 replaces them with an in-app viewer. Both bundled concept images, Close and Escape were verified in the production browser preview without console errors. The workspace concept image and Close button were also verified in the native window. A third SVG mockup documents this viewer.
 
-Version 0.1.1 also uses app-owned native Open/Save As dialogs and narrowly scoped filesystem permissions for selected files. File controls are disabled while a request is pending; success follows the completed write, and cancellation/errors have distinct messages. The native Save As dialog opens. The Windows automation helper cannot operate the owned dialog's controls; actual post-save validation is pending a manual dialog step. Automated file-workflow tests pass, but are not a substitute for that native check.
+Version 0.1.1 uses app-owned native Open/Save As dialogs and narrowly scoped filesystem permissions for selected files. File controls are disabled while a request is pending; success follows the completed write, and cancellation/errors have distinct messages.
+
+Completed native checks on the locally compiled 0.1.1 executable:
+
+- Save As wrote a valid version-1, four-wall project to a path containing spaces; the app reported the completed write. The saved file was independently inspected from disk.
+- Editing wall 2 to a quarter-circle with arc length 4.442882938 m produced 26.28 m², a 20.44 m boundary and the matching curved 3D wall.
+- Dragging inside the 3D canvas visibly changed the camera orbit without changing the room dimensions.
+- Opening the saved project restored the original measured room and 24.00 m² from the curved test room; the app reported `Project opened.` This exercises native file selection, stat, read and geometry validation.
+- Cancelling native Save As with Escape returned `Save cancelled.` and preserved the 24.00 m² project.
+- The app remained functional after the local development/preview servers on ports 5173 and 4173 were stopped; it loaded bundled assets at the Tauri local origin.
+
+The Windows automation helper could observe but could not operate the owned native dialog's file controls. The user completed the Save/Open selections; the resulting file, native status messages and restored geometry were independently verified. Other native UI actions were automated. Malformed-file, oversized-file and disk-write-error handling were covered by automated tests, not induced through native dialogs.
 
 Clean-machine installation, crash recovery and large-project performance remain unverified. This is an executable prototype with WebView2 as a prerequisite, not a self-contained installer.
 
