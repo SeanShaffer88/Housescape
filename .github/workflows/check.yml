@@ -1,0 +1,23 @@
+name: Prototype checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  geometry:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --manifest-path src-tauri/Cargo.toml --locked
+      - run: npm run desktop:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: housescape-windows-x64-prototype
+          path: src-tauri/target/release/housescape.exe
