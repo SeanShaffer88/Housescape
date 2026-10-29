@@ -2,9 +2,9 @@
  * Shared node IDs keep connected walls joined. Positive sweep curves left.
  * This prototype is intentionally not a general multi-room topology solver. */
 export type Point = { x: number; y: number };
-export type Opening = { id: string; offset: number; width: number; sill: number; height: number };
+export type Opening = { id: string; offset: number; width: number; sill: number; height: number; kind?:'door'|'window'|'passage'; flip?:boolean };
 export type Wall = { id: string; start: string; end: string; thickness: number; height: number; sweep: number; openings: Opening[] };
-export type Project = { version: 1; name: string; nodes: Record<string, Point>; walls: Wall[] };
+export type Project = { version: 1; name: string; nodes: Record<string, Point>; walls: Wall[]; floorColor?:string; north?:number; dimensions?:{id:string;a:Point;b:Point}[]; notes?:{id:string;point:Point;text:string}[] };
 export const EPS = 1e-8;
 const add = (a: Point,b: Point):Point=>({x:a.x+b.x,y:a.y+b.y});
 const sub = (a: Point,b: Point):Point=>({x:a.x-b.x,y:a.y-b.y});
@@ -81,6 +81,11 @@ function intersects(a:Point,b:Point,c:Point,d:Point) {
 export function validate(p:Project):void {
   if(!p||p.version!==1||typeof p.name!=='string'||!p.nodes||!Array.isArray(p.walls)||p.walls.length<3||p.walls.length>128)throw Error('Expected a version 1 room with 3–128 walls.');
   const ids=new Set<string>(),openingIds=new Set<string>();
+  if(p.floorColor!==undefined&&!/^#[\da-f]{6}$/i.test(p.floorColor))throw Error('Invalid floor finish.');
+  if(p.north!==undefined&&(!Number.isFinite(p.north)||p.north<0||p.north>=360))throw Error('North angle must be between 0 and 360 degrees.');
+  const finitePoint=(v:Point)=>v&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&Math.max(Math.abs(v.x),Math.abs(v.y))<=1000;
+  if(p.dimensions!==undefined&&(!Array.isArray(p.dimensions)||p.dimensions.length>100||p.dimensions.some(d=>!d||typeof d.id!=='string'||!finitePoint(d.a)||!finitePoint(d.b)||distance(d.a,d.b)<.01)))throw Error('Invalid dimensions.');
+  if(p.notes!==undefined&&(!Array.isArray(p.notes)||p.notes.length>100||p.notes.some(n=>!n||typeof n.id!=='string'||!finitePoint(n.point)||typeof n.text!=='string'||n.text.length>500)))throw Error('Invalid notes.');
   for(const w of p.walls) {
     if(!w||typeof w.id!=='string'||ids.has(w.id))throw Error('Wall IDs must be unique.');ids.add(w.id);
     const a=p.nodes[w.start],b=p.nodes[w.end];
@@ -91,6 +96,8 @@ export function validate(p:Project):void {
     if(Math.abs(w.sweep)>EPS&&arc(p,w).radius<=w.thickness/2)throw Error('Wall curve is too tight.');
     let end=0;
     for(const o of [...w.openings].sort((a,b)=>a.offset-b.offset)) {
+      if(o.kind!==undefined&&!['door','window','passage'].includes(o.kind))throw Error('Invalid opening type.');
+      if(o.flip!==undefined&&typeof o.flip!=='boolean')throw Error('Invalid opening swing.');
       if(!o||typeof o.id!=='string'||openingIds.has(o.id)||![o.offset,o.width,o.sill,o.height].every(Number.isFinite)||o.offset<end+0.05||o.width<.1||o.sill<0||o.height<.1||o.sill+o.height>w.height||o.offset+o.width>wallLength(p,w)-.05)throw Error('Openings must fit the wall and remain separated.');
       openingIds.add(o.id);end=o.offset+o.width;
     }

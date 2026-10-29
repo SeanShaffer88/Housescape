@@ -1,6 +1,6 @@
 [package]
 name = "housescape"
-version = "0.1.1"
+version = "0.2.0"
 description = "Offline personal space planner — geometry prototype"
 authors = ["Housescape contributors"]
 edition = "2021"
